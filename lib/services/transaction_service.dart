@@ -15,6 +15,25 @@ class TransactionService {
   transactions =
   ValueNotifier<List<TransactionModel>>([]);
 
+  static double _cachedTotalIncome = 0.0;
+  static double _cachedTotalExpense = 0.0;
+  static double _cachedBalance = 0.0;
+
+  static void _recalculateTotals() {
+    double inc = 0.0;
+    double exp = 0.0;
+    for (final item in transactions.value) {
+      if (item.isIncome) {
+        inc += item.amount.abs();
+      } else if (item.isExpense) {
+        exp += item.amount.abs();
+      }
+    }
+    _cachedTotalIncome = inc;
+    _cachedTotalExpense = exp;
+    _cachedBalance = inc - exp;
+  }
+
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
 
@@ -22,6 +41,7 @@ class TransactionService {
 
     if (saved == null || saved.isEmpty) {
       transactions.value = [];
+      _recalculateTotals();
       return;
     }
 
@@ -30,6 +50,7 @@ class TransactionService {
 
       if (decoded is! List) {
         transactions.value = [];
+        _recalculateTotals();
         return;
       }
 
@@ -50,6 +71,8 @@ class TransactionService {
       transactions.value = loaded;
     } catch (_) {
       transactions.value = [];
+    } finally {
+      _recalculateTotals();
     }
   }
 
@@ -68,6 +91,7 @@ class TransactionService {
     _sort(updated);
 
     transactions.value = List.unmodifiable(updated);
+    _recalculateTotals();
 
     await _save();
   }
@@ -88,6 +112,7 @@ class TransactionService {
     _sort(updated);
 
     transactions.value = List.unmodifiable(updated);
+    _recalculateTotals();
 
     await _save();
   }
@@ -102,6 +127,7 @@ class TransactionService {
         .toList();
 
     transactions.value = List.unmodifiable(updated);
+    _recalculateTotals();
 
     await _save();
   }
@@ -112,6 +138,7 @@ class TransactionService {
 
   static Future<void> clearAll() async {
     transactions.value = [];
+    _recalculateTotals();
 
     await _prefs.remove(_storageKey);
   }
@@ -128,6 +155,7 @@ class TransactionService {
     _sort(updated);
 
     transactions.value = List.unmodifiable(updated);
+    _recalculateTotals();
 
     await _save();
   }
@@ -136,35 +164,19 @@ class TransactionService {
   // TOTAL INCOME
   // ============================================================
 
-  static double get totalIncome {
-    return transactions.value
-        .where((item) => item.isIncome)
-        .fold(
-      0.0,
-          (sum, item) => sum + item.amount.abs(),
-    );
-  }
+  static double get totalIncome => _cachedTotalIncome;
 
   // ============================================================
   // TOTAL EXPENSE
   // ============================================================
 
-  static double get totalExpense {
-    return transactions.value
-        .where((item) => item.isExpense)
-        .fold(
-      0.0,
-          (sum, item) => sum + item.amount.abs(),
-    );
-  }
+  static double get totalExpense => _cachedTotalExpense;
 
   // ============================================================
   // BALANCE
   // ============================================================
 
-  static double get balance {
-    return totalIncome - totalExpense;
-  }
+  static double get balance => _cachedBalance;
 
   // ============================================================
   // MONTHLY TRANSACTIONS

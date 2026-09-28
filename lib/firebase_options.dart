@@ -57,14 +57,13 @@ class DefaultFirebaseOptions {
     storageBucket: 'expense-tracker-app-2k26.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDX6IpUy5adszSxihXHBBKEvXTIM3GuR7w',
-    appId: '1:520354700454:ios:3133d5c27cbac03f062867',
-    messagingSenderId: '520354700454',
-    projectId: 'expense-tracker-app-2k26',
-    storageBucket: 'expense-tracker-app-2k26.firebasestorage.app',
-    androidClientId: '520354700454-bso1sdi4t8s717i4qhaqbol8ljnt6kak.apps.googleusercontent.com',
-    iosClientId: '520354700454-6f9adnjig2ls8j8guhrm4qg8bn07e9ab.apps.googleusercontent.com',
-    iosBundleId: 'com.example.expenseTracker',
+    apiKey: 'AIzaSyB2yi_KgPy7g3DS9sn1WDYq-zzbn9HMQJM',
+    appId: '1:426249064765:ios:6eddfbf419ac2d7ec17554',
+    messagingSenderId: '426249064765',
+    projectId: 'expense-62f73',
+    storageBucket: 'expense-62f73.firebasestorage.app',
+    iosClientId: '426249064765-vumhe6vkr034ak62itt0j4l3dkat2ck8.apps.googleusercontent.com',
+    iosBundleId: 'com.krishpatel.expenseTracker',
   );
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyDX6IpUy5adszSxihXHBBKEvXTIM3GuR7w',
@@ -74,7 +73,7 @@ class DefaultFirebaseOptions {
     storageBucket: 'expense-tracker-app-2k26.firebasestorage.app',
     androidClientId: '520354700454-bso1sdi4t8s717i4qhaqbol8ljnt6kak.apps.googleusercontent.com',
     iosClientId: '520354700454-6f9adnjig2ls8j8guhrm4qg8bn07e9ab.apps.googleusercontent.com',
-    iosBundleId: 'com.example.expenseTracker',
+    iosBundleId: 'com.krishpatel.expenseTracker',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

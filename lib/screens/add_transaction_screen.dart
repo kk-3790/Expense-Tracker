@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../models/transaction_model.dart';
+import '../services/qr_scanner_service.dart';
 import '../services/settings_service.dart';
 import '../services/transaction_service.dart';
+import 'qr_scanner_screen.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final TransactionModel? transaction;
+  final String? initialTitle;
+  final double? initialAmount;
+  final String? initialCategory;
+  final String? initialNote;
 
   const AddTransactionScreen({
     super.key,
     this.transaction,
+    this.initialTitle,
+    this.initialAmount,
+    this.initialCategory,
+    this.initialNote,
   });
 
   bool get isEditing => transaction != null;
@@ -70,6 +80,8 @@ class _AddTransactionScreenState
     },
   ];
 
+  String? customTitle;
+
   @override
   void initState() {
     super.initState();
@@ -85,6 +97,20 @@ class _AddTransactionScreenState
           transaction.amount.abs().toStringAsFixed(2);
 
       noteController.text = transaction.note;
+      customTitle = transaction.title;
+    } else {
+      customTitle = widget.initialTitle;
+      if (widget.initialCategory != null &&
+          categories.any((c) => c['name'] == widget.initialCategory)) {
+        selectedCategory = widget.initialCategory!;
+      }
+      if (widget.initialAmount != null) {
+        amountController.text =
+            widget.initialAmount!.toStringAsFixed(2);
+      }
+      if (widget.initialNote != null) {
+        noteController.text = widget.initialNote!;
+      }
     }
   }
 
@@ -134,7 +160,9 @@ class _AddTransactionScreenState
               .microsecondsSinceEpoch
               .toString(),
 
-      title: selectedCategory,
+      title: customTitle?.trim().isNotEmpty == true
+          ? customTitle!.trim()
+          : selectedCategory,
 
       note: noteController.text.trim(),
 
@@ -174,6 +202,50 @@ class _AddTransactionScreenState
     Navigator.pop(context, true);
   }
 
+  Future<void> _scanQrCode() async {
+    final result = await Navigator.push<ParsedMerchantQr>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const QrScannerScreen(returnResultOnly: true),
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      customTitle = result.displayTitle;
+      if (categories.any((c) => c['name'] == result.category)) {
+        selectedCategory = result.category;
+      }
+      if (result.amount != null) {
+        amountController.text = result.amount!.toStringAsFixed(2);
+      }
+      final parts = <String>[];
+      if (result.merchantName != null && result.merchantName!.isNotEmpty) {
+        parts.add(result.merchantName!);
+      }
+      if (result.merchantId != null && result.merchantId!.isNotEmpty) {
+        parts.add('ID: ${result.merchantId}');
+      }
+      if (result.mccDescription != null) {
+        parts.add('(${result.mccDescription})');
+      }
+      if (parts.isNotEmpty) {
+        noteController.text = parts.join(' - ');
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Auto-categorized as ${result.category} (${result.matchMethod})',
+        ),
+        backgroundColor: const Color(0xFF172015),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   // ============================================================
   // BUILD
   // ============================================================
@@ -188,8 +260,8 @@ class _AddTransactionScreenState
             Brightness.dark;
 
     final cardColor = isDark
-        ? const Color(0xFF1A2724)
-        : const Color(0xFFEFF3E6);
+        ? const Color(0xFF1E222A)
+        : const Color(0xFFEFF2F6);
 
     return Scaffold(
       appBar: AppBar(
@@ -206,6 +278,15 @@ class _AddTransactionScreenState
               ? 'Edit Transaction'
               : 'Add Transaction',
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Scan Merchant QR',
+            icon: const Icon(
+              Icons.qr_code_scanner_rounded,
+            ),
+            onPressed: _scanQrCode,
+          ),
+        ],
       ),
 
       body: Form(
@@ -265,6 +346,58 @@ class _AddTransactionScreenState
                   ],
                 ),
               ),
+
+              if (customTitle != null && customTitle!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB7F23D).withAlpha(50),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFFB7F23D),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.storefront_rounded,
+                        size: 18,
+                        color: Color(0xFFB7F23D),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Merchant: $customTitle',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: isDark ? Colors.white : const Color(0xFF172015),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            customTitle = null;
+                          });
+                        },
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: isDark ? Colors.white70 : const Color(0xFF172015),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 28),
 
@@ -535,20 +668,23 @@ class _AddTransactionScreenState
 
               SizedBox(
                 width: double.infinity,
-
                 child: ElevatedButton(
                   onPressed: _saveTransaction,
-
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark ? Colors.white : const Color(0xFF121417),
+                    foregroundColor: isDark ? const Color(0xFF121417) : Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
                   child: Text(
                     widget.isEditing
                         ? 'Update Transaction'
-                        : 'Save Transaction',
-
-                    style:
-                    const TextStyle(
+                        : 'Confirm Transaction',
+                    style: const TextStyle(
                       fontSize: 16,
-                      fontWeight:
-                      FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -578,35 +714,27 @@ class _TypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
-
       child: AnimatedContainer(
-        duration:
-        const Duration(milliseconds: 180),
-
-        padding:
-        const EdgeInsets.symmetric(
-          vertical: 14,
-        ),
-
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFFB7F23D)
+              ? (isDark ? Colors.white : const Color(0xFF121417))
               : Colors.transparent,
-
-          borderRadius:
-          BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(14),
         ),
-
         child: Center(
           child: Text(
             title,
-
             style: TextStyle(
-              fontWeight: selected
-                  ? FontWeight.w700
-                  : FontWeight.w500,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected
+                  ? (isDark ? const Color(0xFF121417) : Colors.white)
+                  : (isDark ? Colors.white70 : const Color(0xFF555B63)),
             ),
           ),
         ),
@@ -634,50 +762,39 @@ class _CategoryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: onTap,
-
       child: AnimatedContainer(
-        duration:
-        const Duration(milliseconds: 180),
-
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(8),
-
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFFB7F23D)
-              : isDark
-              ? const Color(0xFF24332F)
-              : const Color(0xFFEFF3E6),
-
-          borderRadius:
-          BorderRadius.circular(18),
+              ? (isDark ? Colors.white : const Color(0xFF121417))
+              : (isDark ? const Color(0xFF1E222A) : const Color(0xFFEFF2F6)),
+          borderRadius: BorderRadius.circular(18),
         ),
-
         child: Column(
-          mainAxisAlignment:
-          MainAxisAlignment.center,
-
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 23,
+              size: 22,
+              color: selected
+                  ? (isDark ? const Color(0xFF121417) : Colors.white)
+                  : (isDark ? Colors.white70 : const Color(0xFF4B5563)),
             ),
-
-            const SizedBox(height: 7),
-
+            const SizedBox(height: 6),
             Text(
               name,
               textAlign: TextAlign.center,
-
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                fontWeight:
-                FontWeight.w500,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected
+                    ? (isDark ? const Color(0xFF121417) : Colors.white)
+                    : (isDark ? Colors.white70 : const Color(0xFF4B5563)),
               ),
             ),
           ],

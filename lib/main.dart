@@ -16,19 +16,39 @@ import 'services/transaction_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  String? initError;
 
-  await SettingsService.init();
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e, stack) {
+    if (!e.toString().contains('duplicate-app')) {
+      debugPrint('Firebase.initializeApp error: $e\n$stack');
+      initError = 'Firebase initialization error:\n$e';
+    }
+  }
 
-  await TransactionService.init();
+  try {
+    await SettingsService.init();
+  } catch (e) {
+    debugPrint('SettingsService.init error: $e');
+  }
 
-  runApp(const ExpenseTrackerApp());
+  try {
+    await TransactionService.init();
+  } catch (e) {
+    debugPrint('TransactionService.init error: $e');
+  }
+
+  runApp(ExpenseTrackerApp(initError: initError));
 }
 
 class ExpenseTrackerApp extends StatelessWidget {
-  const ExpenseTrackerApp({super.key});
+  final String? initError;
+  const ExpenseTrackerApp({super.key, this.initError});
 
   @override
   Widget build(BuildContext context) {
@@ -43,110 +63,100 @@ class ExpenseTrackerApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.light,
-            scaffoldBackgroundColor:
-            const Color(0xFFF5F7EE),
+            scaffoldBackgroundColor: const Color(0xFFF7F8FA),
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFFB7F23D),
+              seedColor: const Color(0xFF0F1115),
               brightness: Brightness.light,
+              surface: Colors.white,
             ),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFFF5F7EE),
+              backgroundColor: Color(0xFFF7F8FA),
               elevation: 0,
               scrolledUnderElevation: 0,
             ),
             textTheme: const TextTheme(
               headlineLarge: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF172015),
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF121417),
+                letterSpacing: -0.5,
               ),
               headlineMedium: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF172015),
+                color: Color(0xFF121417),
+                letterSpacing: -0.3,
               ),
               titleLarge: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF172015),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF121417),
               ),
               titleMedium: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF172015),
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF121417),
               ),
               bodyLarge: TextStyle(
                 fontSize: 16,
-                color: Color(0xFF172015),
+                color: Color(0xFF121417),
               ),
               bodyMedium: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF66705F),
+                color: Color(0xFF8A9099),
               ),
             ),
-            elevatedButtonTheme:
-            ElevatedButtonThemeData(
+            elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                const Color(0xFFB7F23D),
-                foregroundColor:
-                const Color(0xFF172015),
+                backgroundColor: const Color(0xFF121417),
+                foregroundColor: Colors.white,
                 elevation: 0,
-                padding:
-                const EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 16,
                 ),
-                shape:
-                RoundedRectangleBorder(
-                  borderRadius:
-                  BorderRadius.circular(18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
-            ),
-            navigationBarTheme:
-            const NavigationBarThemeData(
-              backgroundColor:
-              Color(0xFFF5F7EE),
-              indicatorColor:
-              Color(0xFFB7F23D),
             ),
           ),
 
           darkTheme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
-            scaffoldBackgroundColor:
-            const Color(0xFF101716),
+            scaffoldBackgroundColor: const Color(0xFF0D0F13),
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFFB7F23D),
+              seedColor: Colors.white,
               brightness: Brightness.dark,
+              surface: const Color(0xFF171A21),
             ),
             appBarTheme: const AppBarTheme(
-              backgroundColor:
-              Color(0xFF101716),
+              backgroundColor: Color(0xFF0D0F13),
               elevation: 0,
               scrolledUnderElevation: 0,
             ),
             textTheme: const TextTheme(
               headlineLarge: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
                 color: Colors.white,
+                letterSpacing: -0.5,
               ),
               headlineMedium: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
+                letterSpacing: -0.3,
               ),
               titleLarge: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.w600,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
               titleMedium: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
               bodyLarge: TextStyle(
@@ -155,58 +165,71 @@ class ExpenseTrackerApp extends StatelessWidget {
               ),
               bodyMedium: TextStyle(
                 fontSize: 14,
-                color: Color(0xFFB7C0B5),
+                color: Color(0xFF8A9099),
               ),
             ),
-            elevatedButtonTheme:
-            ElevatedButtonThemeData(
+            elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                const Color(0xFFB7F23D),
-                foregroundColor:
-                const Color(0xFF172015),
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF121417),
                 elevation: 0,
-                padding:
-                const EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 16,
                 ),
-                shape:
-                RoundedRectangleBorder(
-                  borderRadius:
-                  BorderRadius.circular(18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
             ),
-            navigationBarTheme:
-            const NavigationBarThemeData(
-              backgroundColor:
-              Color(0xFF101716),
-              indicatorColor:
-              Color(0xFFB7F23D),
-            ),
           ),
 
-          home: StreamBuilder<User?>(
-            stream:
-            FirebaseAuth.instance.authStateChanges(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState ==
-                  ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(),
+          home: initError != null
+              ? Scaffold(
+                  body: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, size: 64, color: Colors.orange),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Startup Notice',
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            initError!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () {
+                              runApp(const MaterialApp(
+                                debugShowCheckedModeBanner: false,
+                                home: MainNavigation(),
+                              ));
+                            },
+                            child: const Text('Continue in Offline Mode'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                );
-              }
+                )
+              : StreamBuilder<User?>(
+                  initialData: FirebaseAuth.instance.currentUser,
+                  stream: FirebaseAuth.instance.authStateChanges(),
+                  builder: (context, snapshot) {
+                    if (snapshot.data != null) {
+                      return const MainNavigation();
+                    }
 
-              if (snapshot.hasData) {
-                return const MainNavigation();
-              }
-
-              return const LoginScreen();
-            },
-          ),
+                    return const LoginScreen();
+                  },
+                ),
         );
       },
     );
@@ -227,8 +250,8 @@ class _MainNavigationState
 
   final List<Widget> screens = const [
     HomeScreen(),
-    TransactionsScreen(),
     StatisticsScreen(),
+    TransactionsScreen(),
     SettingsScreen(),
   ];
 
@@ -239,42 +262,97 @@ class _MainNavigationState
         index: currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon:
-            Icon(Icons.home_rounded),
-            label: 'Home',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF121418),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(40),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavBarItem(
+                  icon: Icons.home_rounded,
+                  label: 'Home',
+                  isSelected: currentIndex == 0,
+                  onTap: () => setState(() => currentIndex = 0),
+                ),
+                _NavBarItem(
+                  icon: Icons.donut_large_rounded,
+                  label: 'Insights',
+                  isSelected: currentIndex == 1,
+                  onTap: () => setState(() => currentIndex = 1),
+                ),
+                _NavBarItem(
+                  icon: Icons.account_balance_wallet_rounded,
+                  label: 'Wallet',
+                  isSelected: currentIndex == 2,
+                  onTap: () => setState(() => currentIndex = 2),
+                ),
+                _NavBarItem(
+                  icon: Icons.more_horiz_rounded,
+                  label: 'More',
+                  isSelected: currentIndex == 3,
+                  onTap: () => setState(() => currentIndex = 3),
+                ),
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon:
-            Icon(Icons.receipt_long_outlined),
-            selectedIcon:
-            Icon(Icons.receipt_long_rounded),
-            label: 'Transactions',
-          ),
-          NavigationDestination(
-            icon:
-            Icon(Icons.bar_chart_outlined),
-            selectedIcon:
-            Icon(Icons.bar_chart_rounded),
-            label: 'Stats',
-          ),
-          NavigationDestination(
-            icon:
-            Icon(Icons.settings_outlined),
-            selectedIcon:
-            Icon(Icons.settings_rounded),
-            label: 'Settings',
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavBarItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _NavBarItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: isSelected ? Colors.white : const Color(0xFF6B7280),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? Colors.white : const Color(0xFF6B7280),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

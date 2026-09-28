@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../services/auth_service.dart';
 import '../services/settings_service.dart';
 import '../services/transaction_service.dart';
 import 'login_screen.dart';
@@ -9,418 +10,120 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() =>
-      _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState
-    extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
+  final AuthService _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
-
     SettingsService.themeMode.addListener(_refresh);
     SettingsService.currency.addListener(_refresh);
     SettingsService.monthlyBudget.addListener(_refresh);
-    SettingsService.notificationsEnabled
-        .addListener(_refresh);
-    SettingsService.budgetAlertsEnabled
-        .addListener(_refresh);
   }
 
   @override
   void dispose() {
     SettingsService.themeMode.removeListener(_refresh);
     SettingsService.currency.removeListener(_refresh);
-    SettingsService.monthlyBudget
-        .removeListener(_refresh);
-    SettingsService.notificationsEnabled
-        .removeListener(_refresh);
-    SettingsService.budgetAlertsEnabled
-        .removeListener(_refresh);
-
+    SettingsService.monthlyBudget.removeListener(_refresh);
     super.dispose();
   }
 
   void _refresh() {
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
-  // ============================================================
-  // PROFILE
-  // ============================================================
-
-  void _showProfile() {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) return;
-
-    final name =
-    user.displayName?.trim().isNotEmpty == true
-        ? user.displayName!
-        : 'User';
-
-    final email =
-        user.email ?? 'No email available';
-
-    final photoUrl = user.photoURL;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor:
-      Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              24,
-              28,
-              24,
-              24,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 44,
-                  backgroundColor:
-                  const Color(0xFFB7F23D),
-                  backgroundImage:
-                  photoUrl != null &&
-                      photoUrl.isNotEmpty
-                      ? NetworkImage(photoUrl)
-                      : null,
-                  child:
-                  photoUrl == null ||
-                      photoUrl.isEmpty
-                      ? const Icon(
-                    Icons.person_rounded,
-                    size: 44,
-                    color:
-                    Color(0xFF172015),
-                  )
-                      : null,
-                ),
-
-                const SizedBox(height: 14),
-
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 5),
-
-                Text(
-                  email,
-                  maxLines: 1,
-                  overflow:
-                  TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium,
-                ),
-
-                const SizedBox(height: 18),
-
-                Container(
-                  width: double.infinity,
-                  padding:
-                  const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest,
-                    borderRadius:
-                    BorderRadius.circular(16),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons
-                            .verified_user_outlined,
-                        size: 20,
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'Signed in with Google',
-                        style: TextStyle(
-                          fontWeight:
-                          FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                    },
-                    child: const Text('Close'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // APPEARANCE
-  // ============================================================
-
-  void _showAppearance() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor:
-      Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
-      ),
-      builder: (sheetContext) {
-        final current =
-            SettingsService.themeMode.value;
-
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              22,
-              20,
-              30,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Appearance',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                _ThemeOption(
-                  title: 'System',
-                  subtitle:
-                  'Follow your device theme',
-                  icon: Icons.brightness_auto_rounded,
-                  selected:
-                  current == ThemeMode.system,
-                  onTap: () async {
-                    await SettingsService
-                        .setThemeMode(
-                      ThemeMode.system,
-                    );
-
-                    if (sheetContext.mounted) {
-                      Navigator.pop(sheetContext);
-                    }
-                  },
-                ),
-
-                _ThemeOption(
-                  title: 'Light',
-                  subtitle:
-                  'Use light appearance',
-                  icon: Icons.light_mode_rounded,
-                  selected:
-                  current == ThemeMode.light,
-                  onTap: () async {
-                    await SettingsService
-                        .setThemeMode(
-                      ThemeMode.light,
-                    );
-
-                    if (sheetContext.mounted) {
-                      Navigator.pop(sheetContext);
-                    }
-                  },
-                ),
-
-                _ThemeOption(
-                  title: 'Dark',
-                  subtitle:
-                  'Use dark appearance',
-                  icon: Icons.dark_mode_rounded,
-                  selected:
-                  current == ThemeMode.dark,
-                  onTap: () async {
-                    await SettingsService
-                        .setThemeMode(
-                      ThemeMode.dark,
-                    );
-
-                    if (sheetContext.mounted) {
-                      Navigator.pop(sheetContext);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // CURRENCY
-  // ============================================================
-
-  void _showCurrency() {
+  void _changeCurrency() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     const currencies = [
-      {
-        'name': 'Indian Rupee',
-        'code': '₹',
-      },
-      {
-        'name': 'US Dollar',
-        'code': '\$',
-      },
-      {
-        'name': 'Euro',
-        'code': '€',
-      },
-      {
-        'name': 'British Pound',
-        'code': '£',
-      },
-      {
-        'name': 'Japanese Yen',
-        'code': '¥',
-      },
-      {
-        'name': 'Australian Dollar',
-        'code': 'A\$',
-      },
+      {'symbol': '₹', 'name': 'Indian Rupee (INR)'},
+      {'symbol': '\$', 'name': 'US Dollar (USD)'},
+      {'symbol': '€', 'name': 'Euro (EUR)'},
+      {'symbol': '£', 'name': 'British Pound (GBP)'},
+      {'symbol': '¥', 'name': 'Japanese Yen (JPY)'},
+      {'symbol': 'C\$', 'name': 'Canadian Dollar (CAD)'},
+      {'symbol': 'A\$', 'name': 'Australian Dollar (AUD)'},
     ];
 
     showModalBottomSheet(
       context: context,
-      backgroundColor:
-      Theme.of(context).scaffoldBackgroundColor,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF171A21) : Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (sheetContext) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              22,
-              20,
-              30,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(sheetContext).size.height * 0.75,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Currency',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                ...currencies.map(
-                      (currency) {
-                    final code =
-                    currency['code']!;
-
-                    final selected =
-                        SettingsService
-                            .currency
-                            .value ==
-                            code;
-
-                    return ListTile(
-                      shape:
-                      RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(
-                          16,
-                        ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withAlpha(80),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      tileColor: selected
-                          ? const Color(
-                        0xFFB7F23D,
-                      )
-                          : null,
-                      leading: CircleAvatar(
-                        backgroundColor:
-                        selected
-                            ? Colors.white
-                            : Theme.of(
-                          context,
-                        )
-                            .colorScheme
-                            .surfaceContainerHighest,
-                        child: Text(
-                          code,
-                          style:
-                          const TextStyle(
-                            fontWeight:
-                            FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Select Currency',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 14),
+                  ...currencies.map((curr) {
+                    final isSelected = SettingsService.currency.value == curr['symbol'];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF121418)
+                              : (isDark ? Colors.white12 : const Color(0xFFEFF2F6)),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            curr['symbol']!,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? Colors.white : (isDark ? Colors.white : const Color(0xFF121417)),
+                            ),
                           ),
                         ),
                       ),
                       title: Text(
-                        currency['name']!,
-                        style: const TextStyle(
-                          fontWeight:
-                          FontWeight.w600,
+                        curr['name']!,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                         ),
                       ),
-                      trailing: selected
-                          ? const Icon(
-                        Icons
-                            .check_circle_rounded,
-                      )
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle_rounded, color: Color(0xFF34C759))
                           : null,
                       onTap: () async {
-                        await SettingsService
-                            .setCurrency(code);
-
-                        if (sheetContext.mounted) {
-                          Navigator.pop(
-                            sheetContext,
-                          );
-                        }
+                        await SettingsService.setCurrency(curr['symbol']!);
+                        if (sheetContext.mounted) Navigator.pop(sheetContext);
                       },
                     );
-                  },
-                ),
-              ],
+                  }),
+                ],
+              ),
             ),
           ),
         );
@@ -428,560 +131,439 @@ class _SettingsScreenState
     );
   }
 
-  // ============================================================
-  // MONTHLY BUDGET
-  // ============================================================
-
-  Future<void> _editBudget() async {
-    final controller =
-    TextEditingController(
-      text: SettingsService.monthlyBudget.value
-          .toStringAsFixed(0),
+  void _editBudget() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentBudget = SettingsService.monthlyBudget.value;
+    final textController = TextEditingController(
+      text: currentBudget > 0 ? currentBudget.toStringAsFixed(0) : '',
     );
 
-    final value = await showDialog<double>(
+    showModalBottomSheet(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Monthly Budget'),
-          content: TextField(
-            controller: controller,
-            keyboardType:
-            const TextInputType.numberWithOptions(
-              decimal: true,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF171A21) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
             ),
-            autofocus: true,
-            decoration: InputDecoration(
-              prefixText:
-              '${SettingsService.currency.value} ',
-              hintText: 'Enter budget',
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withAlpha(80),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Set Monthly Budget Limit',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Track your monthly spending with automated progress warnings.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextField(
+                    controller: textController,
+                    autofocus: true,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      prefixText: '${SettingsService.currency.value} ',
+                      prefixStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      hintText: 'e.g. 15000',
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF1F242E) : const Color(0xFFEFF2F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(sheetContext),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final val = double.tryParse(textController.text.trim()) ?? 0.0;
+                            await SettingsService.setMonthlyBudget(val);
+                            if (sheetContext.mounted) Navigator.pop(sheetContext);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF121417),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: const Text(
+                            'Save Budget',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final value =
-                double.tryParse(
-                  controller.text.trim(),
-                );
-
-                if (value == null || value < 0) {
-                  return;
-                }
-
-                Navigator.pop(
-                  dialogContext,
-                  value,
-                );
-              },
-              child: const Text('Save'),
-            ),
-          ],
         );
       },
     );
+  }
 
-    controller.dispose();
+  Future<void> _clearData() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    if (value != null) {
-      await SettingsService.setMonthlyBudget(
-        value,
-      );
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF171A21) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Clear All Transactions?'),
+        content: const Text(
+          'This will permanently delete all recorded income and expenses. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF3B30),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await TransactionService.clearAll();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('All transactions cleared.')),
+        );
+      }
     }
   }
 
-  // ============================================================
-  // CLEAR DATA
-  // ============================================================
+  Future<void> _signOut() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-  Future<void> _clearData() async {
-    final confirmed =
-    await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text(
-            'Clear all transaction data?',
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF171A21) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out of your account?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Cancel'),
           ),
-          content: const Text(
-            'This will permanently delete all '
-                'locally stored transactions. '
-                'Your Google account will not be deleted.',
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF121417),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Sign Out'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  true,
-                );
-              },
-              child: const Text(
-                'Clear Data',
-                style: TextStyle(
-                  color: Color(0xFFB3261E),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) return;
-
-    await TransactionService.clearAll();
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'All transaction data has been cleared.',
-        ),
+        ],
       ),
     );
-  }
 
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
-  Future<void> _logout() async {
-    final confirmed =
-    await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Log out?'),
-          content: const Text(
-            'Are you sure you want to log out?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  true,
-                );
-              },
-              child: const Text(
-                'Log Out',
-                style: TextStyle(
-                  color: Color(0xFFB3261E),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
+    if (confirmed == true) {
+      await _authService.signOut();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
         );
-      },
-    );
-
-    if (confirmed != true) return;
-
-    await FirebaseAuth.instance.signOut();
-
-    if (!mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
-          (route) => false,
-    );
+      }
+    }
   }
-
-  // ============================================================
-  // EXPORT
-  // ============================================================
-
-  void _showExport() {
-    final count =
-        TransactionService.transactions.value.length;
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Export'),
-          content: Text(
-            count == 0
-                ? 'There are no transactions to export yet.'
-                : '$count transaction${count == 1 ? '' : 's'} '
-                'are ready to export.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // IMPORT
-  // ============================================================
-
-  void _showImport() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Import'),
-          content: const Text(
-            'Import will be connected to a file picker '
-                'when external file access is added.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // ABOUT
-  // ============================================================
-
-  void _showAbout() {
-    showAboutDialog(
-      context: context,
-      applicationName: 'Expense Tracker',
-      applicationVersion: '1.0.0',
-      applicationLegalese:
-      'Personal expense management application.',
-      applicationIcon: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: const Color(0xFFB7F23D),
-          borderRadius:
-          BorderRadius.circular(14),
-        ),
-        child: const Icon(
-          Icons.account_balance_wallet_rounded,
-          color: Color(0xFF172015),
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
-    final user =
-        FirebaseAuth.instance.currentUser;
-
-    final name =
-    user?.displayName?.trim().isNotEmpty == true
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF171A21) : Colors.white;
+    final cardBorder = isDark ? Colors.white10 : const Color(0xFFEBEFF5);
+    final user = FirebaseAuth.instance.currentUser;
+    final userName = user?.displayName?.trim().isNotEmpty == true
         ? user!.displayName!
         : 'User';
-
-    final email =
-        user?.email ?? 'No email available';
-
+    final userEmail = user?.email ?? 'Google Account';
     final photoUrl = user?.photoURL;
-
-    final currency =
-        SettingsService.currency.value;
-
-    final budget =
-        SettingsService.monthlyBudget.value;
-
-    final notifications =
-        SettingsService.notificationsEnabled.value;
-
-    final alerts =
-        SettingsService.budgetAlertsEnabled.value;
-
-    final currentMonthExpense =
-    TransactionService.monthlyExpense(
-      DateTime.now().year,
-      DateTime.now().month,
-    );
-
-    final budgetProgress =
-    budget <= 0
-        ? 0.0
-        : (currentMonthExpense / budget)
-        .clamp(0.0, 1.0);
-
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    final currentTheme = SettingsService.themeMode.value;
 
     return Scaffold(
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            24,
-            20,
-            32,
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
           children: [
+            // Title
             Text(
               'Settings',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                color: isDark ? Colors.white : const Color(0xFF121417),
+              ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            // ========================================================
-            // PROFILE
-            // ========================================================
-
-            GestureDetector(
-              onTap: _showProfile,
-              child: Container(
-                padding:
-                const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1A2724)
-                      : const Color(0xFFEFF3E6),
-                  borderRadius:
-                  BorderRadius.circular(24),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor:
-                      const Color(0xFFB7F23D),
-                      backgroundImage:
-                      photoUrl != null &&
-                          photoUrl.isNotEmpty
-                          ? NetworkImage(
-                        photoUrl,
-                      )
-                          : null,
-                      child:
-                      photoUrl == null ||
-                          photoUrl.isEmpty
-                          ? const Icon(
-                        Icons.person_rounded,
-                        color: Color(
-                          0xFF172015,
+            // Profile Card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: cardBorder, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(isDark ? 25 : 6),
+                    blurRadius: 18,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: const Color(0xFF121418),
+                    backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                        ? NetworkImage(photoUrl)
+                        : null,
+                    child: photoUrl == null || photoUrl.isEmpty
+                        ? const Icon(Icons.person_rounded, size: 28, color: Colors.white)
+                        : null,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF121417),
+                          ),
                         ),
-                        size: 30,
-                      )
-                          : null,
-                    ),
-
-                    const SizedBox(width: 14),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            maxLines: 1,
-                            overflow:
-                            TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight:
-                              FontWeight.w700,
-                            ),
+                        const SizedBox(height: 3),
+                        Text(
+                          userEmail,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            email,
-                            maxLines: 1,
-                            overflow:
-                            TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium,
-                          ),
-                        ],
-                      ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF34C759).withAlpha(30),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.verified_user_rounded,
+                      size: 18,
+                      color: Color(0xFF34C759),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                    ),
-                  ],
+            const SizedBox(height: 24),
+
+            // Preferences Section
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 10),
+              child: Text(
+                'Preferences',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
                 ),
               ),
             ),
 
-            const SizedBox(height: 28),
-
-            _SectionTitle(
-              title: 'Preferences',
-            ),
-
-            const SizedBox(height: 10),
-
-            _SettingsTile(
-              icon: Icons.palette_outlined,
-              title: 'Appearance',
-              subtitle: _themeName(
-                SettingsService.themeMode.value,
+            Material(
+              color: cardBg,
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(color: cardBorder, width: 1.2),
               ),
-              onTap: _showAppearance,
-            ),
+              child: Column(
+                children: [
+                  // Currency Setting
+                  ListTile(
+                    onTap: _changeCurrency,
+                    leading: _iconBox(Icons.currency_exchange_rounded, const Color(0xFFFF9500), isDark),
+                    title: const Text('Currency', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          SettingsService.currency.value,
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.chevron_right_rounded, size: 20),
+                      ],
+                    ),
+                  ),
+                  Divider(color: isDark ? Colors.white10 : const Color(0xFFF0F3F7), height: 1),
 
-            _SettingsTile(
-              icon: Icons.currency_exchange_rounded,
-              title: 'Currency',
-              subtitle: currency,
-              onTap: _showCurrency,
-            ),
+                  // Monthly Budget Setting
+                  ListTile(
+                    onTap: _editBudget,
+                    leading: _iconBox(Icons.pie_chart_outline_rounded, const Color(0xFF007AFF), isDark),
+                    title: const Text('Monthly Budget', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          SettingsService.monthlyBudget.value > 0
+                              ? '${SettingsService.currency.value}${SettingsService.monthlyBudget.value.toStringAsFixed(0)}'
+                              : 'Not set',
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.chevron_right_rounded, size: 20),
+                      ],
+                    ),
+                  ),
+                  Divider(color: isDark ? Colors.white10 : const Color(0xFFF0F3F7), height: 1),
 
-            _SettingsTile(
-              icon: Icons.account_balance_wallet_outlined,
-              title: 'Monthly Budget',
-              subtitle: budget <= 0
-                  ? 'Not set'
-                  : '$currency ${budget.toStringAsFixed(0)}',
-              onTap: _editBudget,
-            ),
-
-            const SizedBox(height: 24),
-
-            _SectionTitle(
-              title: 'Notifications',
-            ),
-
-            const SizedBox(height: 10),
-
-            _SwitchTile(
-              icon: Icons.notifications_none_rounded,
-              title: 'Notifications',
-              subtitle:
-              'Receive expense reminders',
-              value: notifications,
-              onChanged: (value) async {
-                await SettingsService
-                    .setNotificationsEnabled(
-                  value,
-                );
-              },
-            ),
-
-            _SwitchTile(
-              icon: Icons.warning_amber_rounded,
-              title: 'Budget Alerts',
-              subtitle:
-              budget <= 0
-                  ? 'Set a budget first'
-                  : '${(budgetProgress * 100).toStringAsFixed(0)}% of budget used',
-              value: alerts,
-              onChanged: budget <= 0
-                  ? null
-                  : (value) async {
-                await SettingsService
-                    .setBudgetAlertsEnabled(
-                  value,
-                );
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            _SectionTitle(
-              title: 'Data',
-            ),
-
-            const SizedBox(height: 10),
-
-            _SettingsTile(
-              icon: Icons.upload_file_outlined,
-              title: 'Export',
-              subtitle:
-              'View your transaction export',
-              onTap: _showExport,
-            ),
-
-            _SettingsTile(
-              icon: Icons.download_outlined,
-              title: 'Import',
-              subtitle:
-              'Import transaction data',
-              onTap: _showImport,
-            ),
-
-            _SettingsTile(
-              icon: Icons.delete_outline_rounded,
-              title: 'Clear Transaction Data',
-              subtitle:
-              'Delete all local transactions',
-              destructive: true,
-              onTap: _clearData,
+                  // Theme Setting
+                  ListTile(
+                    leading: _iconBox(Icons.dark_mode_outlined, const Color(0xFFAF52DE), isDark),
+                    title: const Text('Theme Mode', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                    trailing: DropdownButton<ThemeMode>(
+                      value: currentTheme,
+                      underline: const SizedBox(),
+                      borderRadius: BorderRadius.circular(16),
+                      items: const [
+                        DropdownMenuItem(value: ThemeMode.system, child: Text('System')),
+                        DropdownMenuItem(value: ThemeMode.light, child: Text('Light')),
+                        DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
+                      ],
+                      onChanged: (mode) {
+                        if (mode != null) SettingsService.setThemeMode(mode);
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 24),
 
-            _SectionTitle(
-              title: 'Account',
+            // Data & Actions Section
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 10),
+              child: Text(
+                'Data & Storage',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
+                ),
+              ),
             ),
 
-            const SizedBox(height: 10),
-
-            _SettingsTile(
-              icon: Icons.logout_rounded,
-              title: 'Log Out',
-              subtitle:
-              'Sign out of your Google account',
-              destructive: true,
-              onTap: _logout,
+            Material(
+              color: cardBg,
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(color: cardBorder, width: 1.2),
+              ),
+              child: Column(
+                children: [
+                  ListTile(
+                    onTap: _clearData,
+                    leading: _iconBox(Icons.delete_outline_rounded, const Color(0xFFFF3B30), isDark),
+                    title: const Text(
+                      'Clear All Transactions',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFFFF3B30)),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                  ),
+                ],
+              ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
-            _SettingsTile(
-              icon: Icons.info_outline_rounded,
-              title: 'About',
-              subtitle:
-              'Expense Tracker information',
-              onTap: _showAbout,
+            // Sign Out Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _signOut,
+                icon: const Icon(Icons.logout_rounded, size: 18),
+                label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark ? const Color(0xFF222831) : const Color(0xFFEFF2F6),
+                  foregroundColor: const Color(0xFFFF3B30),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -989,205 +571,15 @@ class _SettingsScreenState
     );
   }
 
-  String _themeName(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'Light';
-      case ThemeMode.dark:
-        return 'Dark';
-      case ThemeMode.system:
-        return 'System';
-    }
-  }
-}
-
-// ============================================================
-// SECTION TITLE
-// ============================================================
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-
-  const _SectionTitle({
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context)
-          .textTheme
-          .titleMedium
-          ?.copyWith(
-        fontWeight: FontWeight.w700,
+  Widget _iconBox(IconData icon, Color color, bool isDark) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: color.withAlpha(isDark ? 40 : 25),
+        borderRadius: BorderRadius.circular(12),
       ),
-    );
-  }
-}
-
-// ============================================================
-// SETTINGS TILE
-// ============================================================
-
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final bool destructive;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.destructive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = destructive
-        ? const Color(0xFFB3261E)
-        : Theme.of(context)
-        .colorScheme
-        .onSurface;
-
-    return ListTile(
-      contentPadding:
-      const EdgeInsets.symmetric(
-        horizontal: 4,
-        vertical: 2,
-      ),
-      leading: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: destructive
-              ? const Color(0x1AB3261E)
-              : const Color(0xFFB7F23D),
-          borderRadius:
-          BorderRadius.circular(14),
-        ),
-        child: Icon(
-          icon,
-          color: color,
-        ),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-      subtitle: Text(subtitle),
-      trailing: const Icon(
-        Icons.chevron_right_rounded,
-      ),
-      onTap: onTap,
-    );
-  }
-}
-
-// ============================================================
-// SWITCH TILE
-// ============================================================
-
-class _SwitchTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-
-  const _SwitchTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding:
-      const EdgeInsets.symmetric(
-        horizontal: 4,
-        vertical: 2,
-      ),
-      leading: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: const Color(0xFFB7F23D),
-          borderRadius:
-          BorderRadius.circular(14),
-        ),
-        child: Icon(icon),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(subtitle),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeThumbColor:
-        const Color(0xFF172015),
-        activeTrackColor:
-        const Color(0xFFB7F23D),
-      ),
-    );
-  }
-}
-
-// ============================================================
-// THEME OPTION
-// ============================================================
-
-class _ThemeOption extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ThemeOption({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      tileColor: selected
-          ? const Color(0xFFB7F23D)
-          : null,
-      leading: Icon(icon),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(subtitle),
-      trailing: selected
-          ? const Icon(
-        Icons.check_circle_rounded,
-      )
-          : null,
+      child: Icon(icon, size: 18, color: color),
     );
   }
 }

@@ -36,12 +36,12 @@ class _LoginScreenState extends State<LoginScreen> {
           'Sign-in was cancelled.';
         });
       }
-    } catch (_) {
+    } catch (e, stack) {
+      debugPrint('Google sign-in error: $e\n$stack');
       if (!mounted) return;
 
       setState(() {
-        _errorMessage =
-        'Google sign-in failed. Please try again.';
+        _errorMessage = 'Google sign-in error:\n$e';
       });
     } finally {
       if (mounted) {
@@ -73,28 +73,32 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 // LOGO
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 88,
+                  height: 88,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB7F23D),
-                    borderRadius:
-                    BorderRadius.circular(30),
+                    color: const Color(0xFF121417),
+                    borderRadius: BorderRadius.circular(26),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(25),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  padding:
-                  const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   child: ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(18),
                     child: Image.asset(
                       'assets/icon/expense_tracker_logo.png',
                       fit: BoxFit.cover,
-                      errorBuilder:
-                          (context, error, stackTrace) {
+                      cacheWidth: 200,
+                      cacheHeight: 200,
+                      errorBuilder: (context, error, stackTrace) {
                         return const Icon(
-                          Icons
-                              .account_balance_wallet_rounded,
-                          size: 52,
-                          color: Color(0xFF172A35),
+                          Icons.account_balance_wallet_rounded,
+                          size: 42,
+                          color: Colors.white,
                         );
                       },
                     ),
@@ -107,8 +111,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Expense Tracker',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
                     color: foreground,
                   ),
                 ),
@@ -116,15 +121,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 10),
 
                 Text(
-                  'Take control of your money.\n'
-                      'Track every expense with ease.',
+                  'Take control of your money.\nTrack every expense with ease.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
                     color: isDark
-                        ? const Color(0xFFB7C0B5)
-                        : const Color(0xFF737B6E),
+                        ? const Color(0xFF8E8E93)
+                        : const Color(0xFF8A9099),
                   ),
                 ),
 
@@ -135,64 +139,47 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : _signInWithGoogle,
+                    onPressed: _isLoading ? null : _signInWithGoogle,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark
-                          ? const Color(0xFF24332F)
-                          : Colors.white,
-                      foregroundColor: foreground,
-                      disabledBackgroundColor:
-                      isDark
-                          ? const Color(0xFF202C29)
-                          : const Color(0xFFE6E9E0),
+                      backgroundColor: isDark ? Colors.white : const Color(0xFF121417),
+                      foregroundColor: isDark ? const Color(0xFF121417) : Colors.white,
                       elevation: 0,
-                      shape:
-                      RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(18),
-                        side: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF34433F)
-                              : const Color(0xFFDCE2D4),
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
                       ),
                     ),
                     child: _isLoading
-                        ? const SizedBox(
-                      width: 23,
-                      height: 23,
-                      child:
-                      CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                        : Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'G',
-                          style: TextStyle(
-                            fontSize: 21,
-                            fontWeight:
-                            FontWeight.w700,
-                            color:
-                            Color(0xFF4285F4),
+                        ? SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                isDark ? const Color(0xFF121417) : Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'G',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF4285F4),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Continue with Google',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Continue with Google',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight:
-                            FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
 
