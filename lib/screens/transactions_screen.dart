@@ -4,6 +4,7 @@ import '../models/transaction_model.dart';
 import '../services/settings_service.dart';
 import '../services/transaction_service.dart';
 import 'add_transaction_screen.dart';
+import 'transaction_detail_screen.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -452,7 +453,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => AddTransactionScreen(
+                                              builder: (_) => TransactionDetailScreen(
                                                 transaction: tx,
                                               ),
                                             ),
@@ -495,14 +496,49 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                                       overflow: TextOverflow.ellipsis,
                                                     ),
                                                     const SizedBox(height: 2),
-                                                    Text(
-                                                      tx.note.isNotEmpty ? tx.note : tx.category,
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            tx.cleanNote.isNotEmpty ? tx.cleanNote : tx.category,
+                                                            style: TextStyle(
+                                                              fontSize: 12,
+                                                              color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        if (tx.isSplitTransaction) ...[
+                                                          const SizedBox(width: 6),
+                                                          Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                                            decoration: BoxDecoration(
+                                                              color: const Color(0xFFB7F23D).withAlpha(25),
+                                                              borderRadius: BorderRadius.circular(6),
+                                                              border: Border.all(
+                                                                color: const Color(0xFFB7F23D).withAlpha(60),
+                                                                width: 0.8,
+                                                              ),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              children: [
+                                                                const Icon(Icons.call_split_rounded, size: 9, color: Color(0xFFB7F23D)),
+                                                                const SizedBox(width: 3),
+                                                                Text(
+                                                                  'Split (${tx.displayPeopleCount})',
+                                                                  style: const TextStyle(
+                                                                    fontSize: 9.5,
+                                                                    fontWeight: FontWeight.w700,
+                                                                    color: Color(0xFFB7F23D),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ],
                                                     ),
                                                   ],
                                                 ),

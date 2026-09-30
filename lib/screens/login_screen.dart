@@ -1,20 +1,53 @@
+import 'dart:async';
+import 'dart:math' as math;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
+import '../theme/paisa_theme.dart';
+import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() =>
-      _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
+  StreamSubscription<User?>? _authSubscription;
 
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-redirect to home page immediately when user signs in
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null && mounted) {
+        _goToHome();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  bool _hasNavigated = false;
+
+  void _goToHome() {
+    if (_hasNavigated || !mounted) return;
+    _hasNavigated = true;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const MainNavigation()),
+      (route) => false,
+    );
+  }
 
   Future<void> _signInWithGoogle() async {
     if (_isLoading) return;
@@ -25,16 +58,18 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final result =
-      await _authService.signInWithGoogle();
+      final result = await _authService.signInWithGoogle();
 
       if (!mounted) return;
 
       if (result == null) {
         setState(() {
-          _errorMessage =
-          'Sign-in was cancelled.';
+          _errorMessage = 'Sign-in was cancelled.';
         });
+      } else {
+        // Immediate redirect to home page
+        _goToHome();
+        return;
       }
     } catch (e, stack) {
       debugPrint('Google sign-in error: $e\n$stack');
@@ -52,178 +87,294 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _continueOffline() {
+    AuthService.switchUserSession('guest');
+    _goToHome();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
-
-    final foreground =
-        Theme.of(context).colorScheme.onSurface;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 28),
-            child: Column(
-              mainAxisAlignment:
-              MainAxisAlignment.center,
-              children: [
-                // LOGO
-                Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF121417),
-                    borderRadius: BorderRadius.circular(26),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(25),
-                        blurRadius: 20,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset(
-                      'assets/icon/expense_tracker_logo.png',
-                      fit: BoxFit.cover,
-                      cacheWidth: 200,
-                      cacheHeight: 200,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.account_balance_wallet_rounded,
-                          size: 42,
-                          color: Colors.white,
-                        );
-                      },
-                    ),
-                  ),
+      backgroundColor: PaisaTheme.background,
+      body: Stack(
+        children: [
+          // Slanted Green Ribbon at top left: * AI Powered * AI Powered *
+          Positioned(
+            top: 40,
+            left: -60,
+            child: Transform.rotate(
+              angle: -math.pi / 7,
+              child: Container(
+                width: size.width * 1.3,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: const BoxDecoration(
+                  color: PaisaTheme.primaryGreen,
                 ),
-
-                const SizedBox(height: 32),
-
-                Text(
-                  'Expense Tracker',
+                child: const Text(
+                  '★ AI Powered ★ AI Powered ★ AI Powered ★ AI Powered ★',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                    color: foreground,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1.5,
                   ),
                 ),
+              ),
+            ),
+          ),
 
-                const SizedBox(height: 10),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Spacer(),
 
-                Text(
-                  'Take control of your money.\nTrack every expense with ease.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: isDark
-                        ? const Color(0xFF8E8E93)
-                        : const Color(0xFF8A9099),
-                  ),
-                ),
-
-                const SizedBox(height: 48),
-
-                // GOOGLE BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signInWithGoogle,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? Colors.white : const Color(0xFF121417),
-                      foregroundColor: isDark ? const Color(0xFF121417) : Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                isDark ? const Color(0xFF121417) : Colors.white,
+                  // Floating UI preview cards matching Behance
+                  Center(
+                    child: SizedBox(
+                      height: 180,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Goals preview card (tilted)
+                          Transform.translate(
+                            offset: const Offset(45, 10),
+                            child: Transform.rotate(
+                              angle: 0.1,
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: PaisaTheme.surface,
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                      color: PaisaTheme.surfaceBorder),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    const Text('Goals',
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 11)),
+                                    SizedBox(
+                                      width: 44,
+                                      height: 44,
+                                      child: CircularProgressIndicator(
+                                        value: 0.2,
+                                        strokeWidth: 3.5,
+                                        backgroundColor:
+                                            PaisaTheme.surfaceBorder,
+                                        valueColor:
+                                            const AlwaysStoppedAnimation<Color>(
+                                          PaisaTheme.primaryGreen,
+                                        ),
+                                      ),
+                                    ),
+                                    const Text('New Bicycle',
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
                               ),
                             ),
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'G',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF4285F4),
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                'Continue with Google',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
                           ),
-                  ),
-                ),
 
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 18),
-                  Text(
-                    _errorMessage!,
+                          // AI Assistant preview card (tilted)
+                          Transform.translate(
+                            offset: const Offset(-45, -10),
+                            child: Transform.rotate(
+                              angle: -0.1,
+                              child: Container(
+                                width: 150,
+                                height: 150,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: PaisaTheme.card,
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                      color: PaisaTheme.surfaceBorder),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(80),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        RichText(
+                                          text: const TextSpan(
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white),
+                                            children: [
+                                              TextSpan(
+                                                text: 'AI ',
+                                                style: TextStyle(
+                                                    color:
+                                                        PaisaTheme.primaryGreen),
+                                              ),
+                                              TextSpan(text: 'Assistant'),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(Icons.chat_bubble_outline,
+                                            size: 13,
+                                            color: PaisaTheme.textGray),
+                                      ],
+                                    ),
+                                    const Text(
+                                      'Get free personal finance assistant from AI.',
+                                      style: TextStyle(
+                                          fontSize: 9.5,
+                                          color: PaisaTheme.textGray),
+                                    ),
+                                    const Row(
+                                      children: [
+                                        Text('Start new chat',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.bold)),
+                                        Spacer(),
+                                        Icon(Icons.north_east_rounded,
+                                            size: 12, color: Colors.white),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Headline matching Behance
+                  const Text(
+                    'Manage your money',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFFB3261E),
-                      fontSize: 13,
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.6,
+                      color: Colors.white,
                     ),
                   ),
-                ],
 
-                const SizedBox(height: 40),
+                  const SizedBox(height: 12),
 
-                Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.lock_outline_rounded,
-                      size: 15,
-                      color: isDark
-                          ? const Color(0xFF899A91)
-                          : const Color(0xFF899181),
+                  // Subtitle matching Behance
+                  const Text(
+                    "Discover a smarter, goal-driven approach to financial success with Paisa. Let's unlock your financial potential.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      height: 1.5,
+                      color: PaisaTheme.textGray,
                     ),
-                    const SizedBox(width: 6),
+                  ),
+
+                  const Spacer(),
+
+                  // Primary Button matching Behance: Start managing your money now →
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _continueOffline,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Start managing your money now',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_rounded,
+                              size: 18, color: Colors.black),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Google Sign-In button
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: _isLoading ? null : _signInWithGoogle,
+                      icon: const Text(
+                        'G',
+                        style: TextStyle(
+                          color: Color(0xFF4285F4),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      label: Text(
+                        _isLoading ? 'Signing in...' : 'Sign in with Google',
+                        style: const TextStyle(
+                          color: PaisaTheme.textLightGray,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 10),
                     Text(
-                      'Secure authentication with Google',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark
-                            ? const Color(0xFF899A91)
-                            : const Color(0xFF899181),
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: PaisaTheme.danger,
+                        fontSize: 12,
                       ),
                     ),
                   ],
-                ),
-              ],
+
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

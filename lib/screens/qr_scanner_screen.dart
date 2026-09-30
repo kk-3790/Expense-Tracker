@@ -4,7 +4,9 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../services/qr_scanner_service.dart';
 import '../services/settings_service.dart';
+import '../theme/paisa_theme.dart';
 import 'add_transaction_screen.dart';
+import 'receipt_scanner_screen.dart';
 
 class QrScannerScreen extends StatefulWidget {
   /// If [returnResultOnly] is true, pops the screen with [ParsedMerchantQr]
@@ -667,25 +669,60 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             ),
           ),
 
-          // 4. Bottom Test / Manual Input Button
+          // 4. Bottom Buttons (Smart Receipt Scanner & Manual Input)
           Positioned(
-            bottom: 34,
-            left: 24,
-            right: 24,
+            bottom: 30,
+            left: 20,
+            right: 20,
             child: SafeArea(
-              child: ElevatedButton.icon(
-                onPressed: _showManualOrTestModal,
-                icon: const Icon(Icons.keyboard_alt_outlined),
-                label: const Text('Enter Code / Test Presets'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black87,
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFFB7F23D), width: 1.5),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ReceiptScannerScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.document_scanner_rounded, size: 18),
+                      label: const Text(
+                        'Scan Receipt',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: PaisaTheme.primaryGreen,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _showManualOrTestModal,
+                      icon: const Icon(Icons.keyboard_alt_outlined, size: 18),
+                      label: const Text(
+                        'Test Presets',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF181A1F),
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: PaisaTheme.surfaceBorder),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

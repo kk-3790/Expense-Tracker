@@ -6,8 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/transaction_model.dart';
 
 class TransactionService {
-  static const String _storageKey =
-      'expense_tracker_transactions';
+  static String? _currentUserId;
+
+  static String get _storageKey {
+    if (_currentUserId == null || _currentUserId!.isEmpty) {
+      return 'expense_tracker_transactions';
+    }
+    return 'expense_tracker_transactions_$_currentUserId';
+  }
 
   static late SharedPreferences _prefs;
 
@@ -34,14 +40,102 @@ class TransactionService {
     _cachedBalance = inc - exp;
   }
 
-  static Future<void> init() async {
+  static Future<void> init({String? userId}) async {
     _prefs = await SharedPreferences.getInstance();
+    await switchUser(userId ?? _currentUserId);
+  }
 
-    final saved = _prefs.getString(_storageKey);
+  /// Switch the active user session and load their specific transactions
+  static Future<void> switchUser(String? userId) async {
+    _currentUserId = userId;
+    final key = _storageKey;
+
+    final saved = _prefs.getString(key);
 
     if (saved == null || saved.isEmpty) {
-      transactions.value = [];
+      // Check for legacy data migration for the initial account
+      final legacy = _prefs.getString('expense_tracker_transactions');
+      final migratedTo = _prefs.getString('expense_tracker_migrated_to');
+      if (legacy != null && legacy.isNotEmpty && (migratedTo == null || migratedTo == userId)) {
+        await _prefs.setString(key, legacy);
+        await _prefs.setString('expense_tracker_migrated_to', userId ?? 'migrated');
+        await switchUser(userId);
+        return;
+      }
+
+      final now = DateTime.now();
+      final defaultSeed = (_currentUserId == null || _currentUserId == 'offline' || _currentUserId == 'guest')
+          ? [
+              TransactionModel(
+                id: 'seed-income-1',
+                title: 'Monthly Salary',
+                note: 'Direct Deposit',
+                date: now.subtract(const Duration(days: 3)),
+                amount: 80000,
+                category: 'Other',
+                type: 'Income',
+              ),
+              TransactionModel(
+                id: 'seed-spotify',
+                title: 'Spotify Premium (Duo)',
+                note: 'Monthly Subscription',
+                date: DateTime(now.year, now.month, now.day, 15, 30),
+                amount: 179,
+                category: 'Entertainment',
+                type: 'Expense',
+              ),
+              TransactionModel(
+                id: 'seed-amazon',
+                title: 'Amazon',
+                note: 'Household essentials',
+                date: DateTime(now.year, now.month, now.day, 11, 44),
+                amount: 1248,
+                category: 'Shopping',
+                type: 'Expense',
+              ),
+              TransactionModel(
+                id: 'seed-groceries',
+                title: 'Whole Foods Groceries',
+                note: 'Weekly essentials',
+                date: now.subtract(const Duration(days: 2)),
+                amount: 1800,
+                category: 'Groceries',
+                type: 'Expense',
+              ),
+              TransactionModel(
+                id: 'seed-metro',
+                title: 'Metro Monthly Pass',
+                note: 'Public Transit',
+                date: now.subtract(const Duration(days: 4)),
+                amount: 1500,
+                category: 'Transportation',
+                type: 'Expense',
+              ),
+              TransactionModel(
+                id: 'seed-utilities',
+                title: 'Electricity & Water',
+                note: 'Utility bill',
+                date: now.subtract(const Duration(days: 5)),
+                amount: 1200,
+                category: 'Utilities',
+                type: 'Expense',
+              ),
+            ]
+          : [
+              TransactionModel(
+                id: 'seed-income-$_currentUserId',
+                title: 'Opening Balance',
+                note: 'Account Initialized',
+                date: now.subtract(const Duration(days: 1)),
+                amount: 50000,
+                category: 'Other',
+                type: 'Income',
+              ),
+            ];
+      _sort(defaultSeed);
+      transactions.value = defaultSeed;
       _recalculateTotals();
+      await _save();
       return;
     }
 

@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/settings_service.dart';
 import '../services/transaction_service.dart';
+import '../theme/paisa_theme.dart';
+import 'ai_chat_screen.dart';
 import 'login_screen.dart';
+import 'notifications_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,114 +19,71 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final AuthService _authService = AuthService();
 
-  @override
-  void initState() {
-    super.initState();
-    SettingsService.themeMode.addListener(_refresh);
-    SettingsService.currency.addListener(_refresh);
-    SettingsService.monthlyBudget.addListener(_refresh);
-  }
-
-  @override
-  void dispose() {
-    SettingsService.themeMode.removeListener(_refresh);
-    SettingsService.currency.removeListener(_refresh);
-    SettingsService.monthlyBudget.removeListener(_refresh);
-    super.dispose();
-  }
-
-  void _refresh() {
-    if (mounted) setState(() {});
-  }
-
-  void _changeCurrency() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  void _showCurrencyPicker() {
     const currencies = [
-      {'symbol': '₹', 'name': 'Indian Rupee (INR)'},
-      {'symbol': '\$', 'name': 'US Dollar (USD)'},
-      {'symbol': '€', 'name': 'Euro (EUR)'},
-      {'symbol': '£', 'name': 'British Pound (GBP)'},
-      {'symbol': '¥', 'name': 'Japanese Yen (JPY)'},
-      {'symbol': 'C\$', 'name': 'Canadian Dollar (CAD)'},
-      {'symbol': 'A\$', 'name': 'Australian Dollar (AUD)'},
+      {'code': '₹ Rupee', 'symbol': '₹'},
+      {'code': '\$ Dollar', 'symbol': '\$'},
+      {'code': '€ Euro', 'symbol': '€'},
+      {'code': '£ Pound', 'symbol': '£'},
     ];
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF171A21) : Colors.white,
+      backgroundColor: PaisaTheme.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (sheetContext) {
+      builder: (ctx) {
         return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(sheetContext).size.height * 0.75,
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withAlpha(80),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: PaisaTheme.surfaceBorder,
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Select Currency',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Select Currency',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 14),
-                  ...currencies.map((curr) {
-                    final isSelected = SettingsService.currency.value == curr['symbol'];
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                      leading: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF121418)
-                              : (isDark ? Colors.white12 : const Color(0xFFEFF2F6)),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            curr['symbol']!,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: isSelected ? Colors.white : (isDark ? Colors.white : const Color(0xFF121417)),
-                            ),
-                          ),
-                        ),
+                ),
+                const SizedBox(height: 14),
+                ...currencies.map((c) {
+                  final isSelected = SettingsService.currency.value == c['symbol'];
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      c['code']!,
+                      style: TextStyle(
+                        color: isSelected ? PaisaTheme.primaryGreen : Colors.white,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       ),
-                      title: Text(
-                        curr['name']!,
-                        style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        ),
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_circle_rounded, color: Color(0xFF34C759))
-                          : null,
-                      onTap: () async {
-                        await SettingsService.setCurrency(curr['symbol']!);
-                        if (sheetContext.mounted) Navigator.pop(sheetContext);
-                      },
-                    );
-                  }),
-                ],
-              ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle_rounded,
+                            color: PaisaTheme.primaryGreen)
+                        : null,
+                    onTap: () async {
+                      await SettingsService.setCurrency(c['symbol']!);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      setState(() {});
+                    },
+                  );
+                }),
+              ],
             ),
           ),
         );
@@ -131,455 +91,492 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _editBudget() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentBudget = SettingsService.monthlyBudget.value;
-    final textController = TextEditingController(
-      text: currentBudget > 0 ? currentBudget.toStringAsFixed(0) : '',
-    );
+  void _showAccountDetails() {
+    final user = FirebaseAuth.instance.currentUser;
+    final name = (user?.displayName != null && user!.displayName!.isNotEmpty)
+        ? user.displayName!
+        : 'Guest User';
+    final email = (user?.email != null && user!.email!.isNotEmpty)
+        ? user.email!
+        : 'guest@paisa.app';
+    final photo = user?.photoURL;
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF171A21) : Colors.white,
+      backgroundColor: PaisaTheme.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withAlpha(80),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Set Monthly Budget Limit',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Track your monthly spending with automated progress warnings.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  TextField(
-                    controller: textController,
-                    autofocus: true,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      prefixText: '${SettingsService.currency.value} ',
-                      prefixStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                      hintText: 'e.g. 15000',
-                      filled: true,
-                      fillColor: isDark ? const Color(0xFF1F242E) : const Color(0xFFEFF2F6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(sheetContext),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final val = double.tryParse(textController.text.trim()) ?? 0.0;
-                            await SettingsService.setMonthlyBudget(val);
-                            if (sheetContext.mounted) Navigator.pop(sheetContext);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF121417),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          child: const Text(
-                            'Save Budget',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 36,
+                backgroundColor: PaisaTheme.surface,
+                backgroundImage: photo != null ? NetworkImage(photo) : null,
+                child: photo == null
+                    ? const Icon(Icons.person_rounded, size: 36, color: Colors.white)
+                    : null,
               ),
-            ),
+              const SizedBox(height: 14),
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                email,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: PaisaTheme.textGray,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text('Close'),
+                ),
+              ),
+            ],
           ),
-        );
-      },
-    );
-  }
-
-  Future<void> _clearData() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF171A21) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Clear All Transactions?'),
-        content: const Text(
-          'This will permanently delete all recorded income and expenses. This action cannot be undone.',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF3B30),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete All'),
-          ),
-        ],
       ),
     );
-
-    if (confirmed == true) {
-      await TransactionService.clearAll();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('All transactions cleared.')),
-        );
-      }
-    }
   }
 
-  Future<void> _signOut() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final confirmed = await showDialog<bool>(
+  void _showInfoDialog(String title, String content) {
+    showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF171A21) : Colors.white,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaisaTheme.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out of your account?'),
+        title: Text(title, style: const TextStyle(color: Colors.white)),
+        content: Text(content,
+            style: const TextStyle(color: PaisaTheme.textLightGray)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF121417),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Sign Out'),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK',
+                style: TextStyle(color: PaisaTheme.primaryGreen)),
           ),
         ],
       ),
     );
-
-    if (confirmed == true) {
-      await _authService.signOut();
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-        );
-      }
-    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF171A21) : Colors.white;
-    final cardBorder = isDark ? Colors.white10 : const Color(0xFFEBEFF5);
-    final user = FirebaseAuth.instance.currentUser;
-    final userName = user?.displayName?.trim().isNotEmpty == true
-        ? user!.displayName!
-        : 'User';
-    final userEmail = user?.email ?? 'Google Account';
-    final photoUrl = user?.photoURL;
-    final currentTheme = SettingsService.themeMode.value;
-
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+  void _showClearTransactionsDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaisaTheme.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
           children: [
-            // Title
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFFF4B4B), size: 24),
+            SizedBox(width: 8),
             Text(
-              'Settings',
+              'Clear Transactions',
               style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-                color: isDark ? Colors.white : const Color(0xFF121417),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Profile Card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: cardBorder, width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(isDark ? 25 : 6),
-                    blurRadius: 18,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: const Color(0xFF121418),
-                    backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                        ? NetworkImage(photoUrl)
-                        : null,
-                    child: photoUrl == null || photoUrl.isEmpty
-                        ? const Icon(Icons.person_rounded, size: 28, color: Colors.white)
-                        : null,
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF121417),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          userEmail,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF34C759).withAlpha(30),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.verified_user_rounded,
-                      size: 18,
-                      color: Color(0xFF34C759),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Preferences Section
-            Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 10),
-              child: Text(
-                'Preferences',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
-                ),
-              ),
-            ),
-
-            Material(
-              color: cardBg,
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: BorderSide(color: cardBorder, width: 1.2),
-              ),
-              child: Column(
-                children: [
-                  // Currency Setting
-                  ListTile(
-                    onTap: _changeCurrency,
-                    leading: _iconBox(Icons.currency_exchange_rounded, const Color(0xFFFF9500), isDark),
-                    title: const Text('Currency', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          SettingsService.currency.value,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.chevron_right_rounded, size: 20),
-                      ],
-                    ),
-                  ),
-                  Divider(color: isDark ? Colors.white10 : const Color(0xFFF0F3F7), height: 1),
-
-                  // Monthly Budget Setting
-                  ListTile(
-                    onTap: _editBudget,
-                    leading: _iconBox(Icons.pie_chart_outline_rounded, const Color(0xFF007AFF), isDark),
-                    title: const Text('Monthly Budget', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          SettingsService.monthlyBudget.value > 0
-                              ? '${SettingsService.currency.value}${SettingsService.monthlyBudget.value.toStringAsFixed(0)}'
-                              : 'Not set',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.chevron_right_rounded, size: 20),
-                      ],
-                    ),
-                  ),
-                  Divider(color: isDark ? Colors.white10 : const Color(0xFFF0F3F7), height: 1),
-
-                  // Theme Setting
-                  ListTile(
-                    leading: _iconBox(Icons.dark_mode_outlined, const Color(0xFFAF52DE), isDark),
-                    title: const Text('Theme Mode', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                    trailing: DropdownButton<ThemeMode>(
-                      value: currentTheme,
-                      underline: const SizedBox(),
-                      borderRadius: BorderRadius.circular(16),
-                      items: const [
-                        DropdownMenuItem(value: ThemeMode.system, child: Text('System')),
-                        DropdownMenuItem(value: ThemeMode.light, child: Text('Light')),
-                        DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
-                      ],
-                      onChanged: (mode) {
-                        if (mode != null) SettingsService.setThemeMode(mode);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Data & Actions Section
-            Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 10),
-              child: Text(
-                'Data & Storage',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF8A9099),
-                ),
-              ),
-            ),
-
-            Material(
-              color: cardBg,
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: BorderSide(color: cardBorder, width: 1.2),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    onTap: _clearData,
-                    leading: _iconBox(Icons.delete_outline_rounded, const Color(0xFFFF3B30), isDark),
-                    title: const Text(
-                      'Clear All Transactions',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFFFF3B30)),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Sign Out Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _signOut,
-                icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? const Color(0xFF222831) : const Color(0xFFEFF2F6),
-                  foregroundColor: const Color(0xFFFF3B30),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                ),
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
               ),
             ),
           ],
         ),
+        content: const Text(
+          'Are you sure you want to delete all recorded income and expense transactions? Your balance will be reset to ₹0. This action cannot be undone.',
+          style: TextStyle(color: PaisaTheme.textLightGray, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await TransactionService.clearAll();
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('All transactions cleared successfully'),
+                    backgroundColor: Color(0xFFFF4B4B),
+                  ),
+                );
+                setState(() {});
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF4B4B),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            child: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _iconBox(IconData icon, Color color, bool isDark) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: color.withAlpha(isDark ? 40 : 25),
-        borderRadius: BorderRadius.circular(12),
+  void _showNotificationSettingsModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PaisaTheme.card,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      child: Icon(icon, size: 18, color: color),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: PaisaTheme.surfaceBorder,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Notifications & Alerts',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Enable automated alerts when goals and budget limits are near or reached:',
+                      style: TextStyle(fontSize: 12, color: PaisaTheme.textGray),
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Goal Near Reach Alert',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                      subtitle: const Text(
+                        'Notify when savings goal reaches 75% or 100% target',
+                        style: TextStyle(color: PaisaTheme.textGray, fontSize: 12),
+                      ),
+                      activeThumbColor: PaisaTheme.primaryGreen,
+                      value: SettingsService.goalAlertsEnabled.value,
+                      onChanged: (v) async {
+                        await SettingsService.setGoalAlertsEnabled(v);
+                        setModalState(() {});
+                        setState(() {});
+                      },
+                    ),
+                    const Divider(color: PaisaTheme.surfaceBorder, height: 16),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Category Budget Limit Alert',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                      subtitle: const Text(
+                        'Notify when category spending is near limit (80%) or full (100%)',
+                        style: TextStyle(color: PaisaTheme.textGray, fontSize: 12),
+                      ),
+                      activeThumbColor: PaisaTheme.primaryGreen,
+                      value: SettingsService.categoryBudgetAlertsEnabled.value,
+                      onChanged: (v) async {
+                        await SettingsService.setCategoryBudgetAlertsEnabled(v);
+                        setModalState(() {});
+                        setState(() {});
+                      },
+                    ),
+                    const Divider(color: PaisaTheme.surfaceBorder, height: 16),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Push Notifications',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                      subtitle: const Text(
+                        'Allow notifications and split bill updates',
+                        style: TextStyle(color: PaisaTheme.textGray, fontSize: 12),
+                      ),
+                      activeThumbColor: PaisaTheme.primaryGreen,
+                      value: SettingsService.notificationsEnabled.value,
+                      onChanged: (v) async {
+                        await SettingsService.setNotificationsEnabled(v);
+                        setModalState(() {});
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: PaisaTheme.primaryGreen,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: const Text('Open Notification Center', style: TextStyle(fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: PaisaTheme.background,
+      appBar: AppBar(
+        backgroundColor: PaisaTheme.background,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Settings',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
+        children: [
+          _SettingsRow(
+            icon: Icons.person_outline_rounded,
+            title: 'Account',
+            onTap: _showAccountDetails,
+          ),
+          _SettingsRow(
+            icon: Icons.smart_toy_outlined,
+            title: 'AI Bot',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AiChatScreen()),
+              );
+            },
+          ),
+          _SettingsRow(
+            icon: Icons.attach_money_rounded,
+            title: 'Currency',
+            valueText: SettingsService.currency.value == '₹'
+                ? '₹ Rupee'
+                : '${SettingsService.currency.value} Default',
+            hasDropdown: true,
+            onTap: _showCurrencyPicker,
+          ),
+          _SettingsRow(
+            icon: Icons.notifications_none_rounded,
+            title: 'Notification',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              );
+            },
+          ),
+          _SettingsRow(
+            icon: Icons.notifications_active_outlined,
+            title: 'Smart Alerts & Preferences',
+            onTap: _showNotificationSettingsModal,
+          ),
+          _SettingsRow(
+            icon: Icons.cloud_download_outlined,
+            title: 'Data Export',
+            onTap: () => _showInfoDialog(
+              'Data Export',
+              'Your financial transaction history is saved securely on your device. Export to CSV is ready anytime.',
+            ),
+          ),
+          _SettingsRow(
+            icon: Icons.language_rounded,
+            title: 'Language',
+            valueText: 'English',
+            onTap: () => _showInfoDialog('Language', 'Default language is English (US).'),
+          ),
+          _SettingsRow(
+            icon: Icons.shield_outlined,
+            title: 'Privacy',
+            onTap: () => _showInfoDialog(
+              'Privacy',
+              'Paisa respects your financial privacy. All offline transactions are encrypted locally.',
+            ),
+          ),
+          _SettingsRow(
+            icon: Icons.lock_outline_rounded,
+            title: 'Security',
+            onTap: () => _showInfoDialog(
+              'Security',
+              'Biometric Face ID / Fingerprint lock enabled for maximum security.',
+            ),
+          ),
+          _SettingsRow(
+            icon: Icons.chat_bubble_outline_rounded,
+            title: 'Feedback and Suggestions',
+            onTap: () => _showInfoDialog(
+              'Feedback',
+              'Thank you for using Paisa! Send your suggestions to support@paisa.app',
+            ),
+          ),
+          _SettingsRow(
+            icon: Icons.help_outline_rounded,
+            title: 'Help and Support',
+            onTap: () => _showInfoDialog(
+              'Help & Support',
+              'Need assistance? Contact our 24/7 financial concierge.',
+            ),
+          ),
+          _SettingsRow(
+            icon: Icons.delete_sweep_rounded,
+            title: 'Clear All Transactions',
+            valueText: 'Reset ₹0',
+            onTap: _showClearTransactionsDialog,
+          ),
+
+          const SizedBox(height: 24),
+
+          // Sign Out Button
+          Container(
+            decoration: BoxDecoration(
+              color: PaisaTheme.card,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: PaisaTheme.surfaceBorder),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.logout_rounded, color: Color(0xFFFF4B4B)),
+              title: const Text(
+                'Sign Out',
+                style: TextStyle(
+                  color: Color(0xFFFF4B4B),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+              onTap: () async {
+                await _authService.signOut();
+                if (!context.mounted) return;
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? valueText;
+  final bool hasDropdown;
+  final VoidCallback onTap;
+
+  const _SettingsRow({
+    required this.icon,
+    required this.title,
+    this.valueText,
+    this.hasDropdown = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: PaisaTheme.card,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: PaisaTheme.surfaceBorder),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 22, color: Colors.white),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              if (valueText != null) ...[
+                Text(
+                  valueText!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: PaisaTheme.textGray,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Icon(
+                hasDropdown
+                    ? Icons.keyboard_arrow_down_rounded
+                    : Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: PaisaTheme.textMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
