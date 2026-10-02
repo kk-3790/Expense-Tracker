@@ -160,10 +160,3 @@ Feel free to check out the [issues page](https://github.com/krishpatel-317/Expen
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
----
-
-<div align="center">
-
-Crafted with ❤️ by **[Krish Patel](https://github.com/krishpatel-317)**
-
-</div>
