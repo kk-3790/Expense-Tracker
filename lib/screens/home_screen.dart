@@ -485,9 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               Text(
-                                todayExpense > 0
-                                    ? '- ${_formatCurrency(todayExpense)}'
-                                    : _formatCurrency(0),
+                                _formatCurrency(todayExpense),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -534,9 +532,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               Text(
-                                weeklyExpense > 0
-                                    ? '- ${_formatCurrency(weeklyExpense)}'
-                                    : _formatCurrency(0),
+                                _formatCurrency(weeklyExpense),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
