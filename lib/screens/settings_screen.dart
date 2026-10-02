@@ -471,6 +471,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           _SettingsRow(
+            icon: Icons.auto_awesome_rounded,
+            title: 'Seed Demo Data',
+            valueText: 'Generate',
+            onTap: () async {
+              await TransactionService.seedDemoData(force: true);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Demo transactions populated successfully! 🚀'),
+                  backgroundColor: PaisaTheme.primaryGreen,
+                ),
+              );
+            },
+          ),
+          _SettingsRow(
             icon: Icons.delete_sweep_rounded,
             title: 'Clear All Transactions',
             valueText: 'Reset ₹0',
