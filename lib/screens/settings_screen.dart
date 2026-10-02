@@ -160,25 +160,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showInfoDialog(String title, String content) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: PaisaTheme.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(title, style: const TextStyle(color: Colors.white)),
-        content: Text(content,
-            style: const TextStyle(color: PaisaTheme.textLightGray)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK',
-                style: TextStyle(color: PaisaTheme.primaryGreen)),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showClearTransactionsDialog() {
     showDialog(
@@ -235,134 +216,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showNotificationSettingsModal() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: PaisaTheme.card,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: PaisaTheme.surfaceBorder,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      'Notifications & Alerts',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Enable automated alerts when goals and budget limits are near or reached:',
-                      style: TextStyle(fontSize: 12, color: PaisaTheme.textGray),
-                    ),
-                    const SizedBox(height: 16),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text(
-                        'Goal Near Reach Alert',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
-                      ),
-                      subtitle: const Text(
-                        'Notify when savings goal reaches 75% or 100% target',
-                        style: TextStyle(color: PaisaTheme.textGray, fontSize: 12),
-                      ),
-                      activeThumbColor: PaisaTheme.primaryGreen,
-                      value: SettingsService.goalAlertsEnabled.value,
-                      onChanged: (v) async {
-                        await SettingsService.setGoalAlertsEnabled(v);
-                        setModalState(() {});
-                        setState(() {});
-                      },
-                    ),
-                    const Divider(color: PaisaTheme.surfaceBorder, height: 16),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text(
-                        'Category Budget Limit Alert',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
-                      ),
-                      subtitle: const Text(
-                        'Notify when category spending is near limit (80%) or full (100%)',
-                        style: TextStyle(color: PaisaTheme.textGray, fontSize: 12),
-                      ),
-                      activeThumbColor: PaisaTheme.primaryGreen,
-                      value: SettingsService.categoryBudgetAlertsEnabled.value,
-                      onChanged: (v) async {
-                        await SettingsService.setCategoryBudgetAlertsEnabled(v);
-                        setModalState(() {});
-                        setState(() {});
-                      },
-                    ),
-                    const Divider(color: PaisaTheme.surfaceBorder, height: 16),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text(
-                        'Push Notifications',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
-                      ),
-                      subtitle: const Text(
-                        'Allow notifications and split bill updates',
-                        style: TextStyle(color: PaisaTheme.textGray, fontSize: 12),
-                      ),
-                      activeThumbColor: PaisaTheme.primaryGreen,
-                      value: SettingsService.notificationsEnabled.value,
-                      onChanged: (v) async {
-                        await SettingsService.setNotificationsEnabled(v);
-                        setModalState(() {});
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: PaisaTheme.primaryGreen,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: const Text('Open Notification Center', style: TextStyle(fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -391,16 +244,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: _showAccountDetails,
           ),
           _SettingsRow(
-            icon: Icons.smart_toy_outlined,
-            title: 'AI Bot',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AiChatScreen()),
-              );
-            },
-          ),
-          _SettingsRow(
             icon: Icons.attach_money_rounded,
             title: 'Currency',
             valueText: SettingsService.currency.value == '₹'
@@ -411,64 +254,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.notifications_none_rounded,
-            title: 'Notification',
+            title: 'Notifications & Alerts',
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const NotificationsScreen()),
               );
             },
-          ),
-          _SettingsRow(
-            icon: Icons.notifications_active_outlined,
-            title: 'Smart Alerts & Preferences',
-            onTap: _showNotificationSettingsModal,
-          ),
-          _SettingsRow(
-            icon: Icons.cloud_download_outlined,
-            title: 'Data Export',
-            onTap: () => _showInfoDialog(
-              'Data Export',
-              'Your financial transaction history is saved securely on your device. Export to CSV is ready anytime.',
-            ),
-          ),
-          _SettingsRow(
-            icon: Icons.language_rounded,
-            title: 'Language',
-            valueText: 'English',
-            onTap: () => _showInfoDialog('Language', 'Default language is English (US).'),
-          ),
-          _SettingsRow(
-            icon: Icons.shield_outlined,
-            title: 'Privacy',
-            onTap: () => _showInfoDialog(
-              'Privacy',
-              'Paisa respects your financial privacy. All offline transactions are encrypted locally.',
-            ),
-          ),
-          _SettingsRow(
-            icon: Icons.lock_outline_rounded,
-            title: 'Security',
-            onTap: () => _showInfoDialog(
-              'Security',
-              'Biometric Face ID / Fingerprint lock enabled for maximum security.',
-            ),
-          ),
-          _SettingsRow(
-            icon: Icons.chat_bubble_outline_rounded,
-            title: 'Feedback and Suggestions',
-            onTap: () => _showInfoDialog(
-              'Feedback',
-              'Thank you for using Paisa! Send your suggestions to support@paisa.app',
-            ),
-          ),
-          _SettingsRow(
-            icon: Icons.help_outline_rounded,
-            title: 'Help and Support',
-            onTap: () => _showInfoDialog(
-              'Help & Support',
-              'Need assistance? Contact our 24/7 financial concierge.',
-            ),
           ),
           _SettingsRow(
             icon: Icons.auto_awesome_rounded,
