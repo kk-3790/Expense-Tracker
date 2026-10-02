@@ -107,35 +107,17 @@ class _HomeScreenState extends State<HomeScreen> {
           return t.isExpense && diff > 7 && diff <= 14;
         }).fold(0.0, (sum, t) => sum + t.amount);
 
-        final String todayPercentText;
-        if (todayExpense <= 0) {
-          todayPercentText = '0.0%';
-        } else if (yesterdayExpense > 0) {
-          final delta =
-              ((todayExpense - yesterdayExpense) / yesterdayExpense) * 100;
-          todayPercentText =
-              '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%';
-        } else if (weeklyExpense > 0) {
-          final share = (todayExpense / weeklyExpense) * 100;
-          todayPercentText = '+${share.toStringAsFixed(1)}%';
-        } else {
-          todayPercentText = '0.0%';
-        }
+        // Calculate spending ratio as % of total active funds (matches Behance design: 1.4%, 2.8%)
+        final totalPool = balance.abs() + weeklyExpense;
+        final double todayRatio = (todayExpense > 0 && totalPool > 0)
+            ? (todayExpense / totalPool) * 100
+            : 0.0;
+        final String todayPercentText = '${todayRatio.toStringAsFixed(1)}%';
 
-        final String weeklyPercentText;
-        if (weeklyExpense <= 0) {
-          weeklyPercentText = '0.0%';
-        } else if (prevWeeklyExpense > 0) {
-          final delta =
-              ((weeklyExpense - prevWeeklyExpense) / prevWeeklyExpense) * 100;
-          weeklyPercentText =
-              '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%';
-        } else if (balance.abs() > 0) {
-          final share = (weeklyExpense / (balance.abs() + weeklyExpense)) * 100;
-          weeklyPercentText = '+${share.toStringAsFixed(1)}%';
-        } else {
-          weeklyPercentText = '0.0%';
-        }
+        final double weeklyRatio = (weeklyExpense > 0 && totalPool > 0)
+            ? (weeklyExpense / totalPool) * 100
+            : 0.0;
+        final String weeklyPercentText = '${weeklyRatio.toStringAsFixed(1)}%';
 
         // Weekly income to determine savings rate trend
         final weeklyIncome = transactions.where((t) {
@@ -503,7 +485,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               Text(
-                                '- ${_formatCurrency(todayExpense)}',
+                                todayExpense > 0
+                                    ? '- ${_formatCurrency(todayExpense)}'
+                                    : _formatCurrency(0),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -550,7 +534,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               Text(
-                                '- ${_formatCurrency(weeklyExpense)}',
+                                weeklyExpense > 0
+                                    ? '- ${_formatCurrency(weeklyExpense)}'
+                                    : _formatCurrency(0),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
