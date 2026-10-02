@@ -95,18 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
               t.date.day == yesterday.day;
         }).fold(0.0, (sum, t) => sum + t.amount);
 
-        final String todayPercentText;
-        if (yesterdayExpense > 0) {
-          final delta =
-              ((todayExpense - yesterdayExpense) / yesterdayExpense) * 100;
-          todayPercentText =
-              '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%';
-        } else if (todayExpense > 0) {
-          todayPercentText = '+100%';
-        } else {
-          todayPercentText = '0.0%';
-        }
-
         // Weekly expense (last 7 days)
         final weeklyExpense = transactions.where((t) {
           final diff = now.difference(t.date).inDays;
@@ -119,14 +107,32 @@ class _HomeScreenState extends State<HomeScreen> {
           return t.isExpense && diff > 7 && diff <= 14;
         }).fold(0.0, (sum, t) => sum + t.amount);
 
+        final String todayPercentText;
+        if (todayExpense <= 0) {
+          todayPercentText = '0.0%';
+        } else if (yesterdayExpense > 0) {
+          final delta =
+              ((todayExpense - yesterdayExpense) / yesterdayExpense) * 100;
+          todayPercentText =
+              '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%';
+        } else if (weeklyExpense > 0) {
+          final share = (todayExpense / weeklyExpense) * 100;
+          todayPercentText = '+${share.toStringAsFixed(1)}%';
+        } else {
+          todayPercentText = '0.0%';
+        }
+
         final String weeklyPercentText;
-        if (prevWeeklyExpense > 0) {
+        if (weeklyExpense <= 0) {
+          weeklyPercentText = '0.0%';
+        } else if (prevWeeklyExpense > 0) {
           final delta =
               ((weeklyExpense - prevWeeklyExpense) / prevWeeklyExpense) * 100;
           weeklyPercentText =
               '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%';
-        } else if (weeklyExpense > 0) {
-          weeklyPercentText = '+100%';
+        } else if (balance.abs() > 0) {
+          final share = (weeklyExpense / (balance.abs() + weeklyExpense)) * 100;
+          weeklyPercentText = '+${share.toStringAsFixed(1)}%';
         } else {
           weeklyPercentText = '0.0%';
         }
