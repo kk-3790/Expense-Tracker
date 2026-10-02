@@ -156,6 +156,17 @@ class _HomeScreenState extends State<HomeScreen> {
           isBalancePositive = balance >= 0;
         }
 
+        final bool isTodayNegative = todayPercentText.startsWith('-');
+        final Color todayBadgeColor =
+            isTodayNegative ? PaisaTheme.danger : PaisaTheme.primaryGreen;
+
+        final bool isWeeklyNegative = weeklyPercentText.startsWith('-');
+        final Color weeklyBadgeColor =
+            isWeeklyNegative ? PaisaTheme.danger : PaisaTheme.primaryGreen;
+
+        final Color balanceBadgeColor =
+            isBalancePositive ? PaisaTheme.primaryGreen : PaisaTheme.danger;
+
         return Scaffold(
           backgroundColor: PaisaTheme.background,
           body: SafeArea(
@@ -442,10 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: (isBalancePositive
-                                ? PaisaTheme.primaryGreen
-                                : Colors.orangeAccent)
-                            .withAlpha(40),
+                        color: balanceBadgeColor.withAlpha(40),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -456,9 +464,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? Icons.arrow_upward_rounded
                                 : Icons.arrow_downward_rounded,
                             size: 11,
-                            color: isBalancePositive
-                                ? PaisaTheme.primaryGreen
-                                : Colors.orangeAccent,
+                            color: balanceBadgeColor,
                           ),
                           const SizedBox(width: 2),
                           Text(
@@ -466,9 +472,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: isBalancePositive
-                                  ? PaisaTheme.primaryGreen
-                                  : Colors.orangeAccent,
+                              color: balanceBadgeColor,
                             ),
                           ),
                         ],
@@ -511,15 +515,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: PaisaTheme.primaryGreen.withAlpha(35),
+                                  color: todayBadgeColor.withAlpha(35),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   todayPercentText,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
-                                    color: PaisaTheme.primaryGreen,
+                                    color: todayBadgeColor,
                                   ),
                                 ),
                               ),
@@ -558,15 +562,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: PaisaTheme.primaryGreen.withAlpha(35),
+                                  color: weeklyBadgeColor.withAlpha(35),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   weeklyPercentText,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
-                                    color: PaisaTheme.primaryGreen,
+                                    color: weeklyBadgeColor,
                                   ),
                                 ),
                               ),
