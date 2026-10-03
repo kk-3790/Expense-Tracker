@@ -14,10 +14,11 @@
 [![Google Gemini AI](https://img.shields.io/badge/Gemini%20AI-3.5%20Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20%7C%20Android-4E9A06?style=for-the-badge&logo=android&logoColor=white)](https://flutter.dev)
 [![Tests](https://img.shields.io/badge/Tests-47%20Passed%20(100%25)-success?style=for-the-badge&logo=checkmarx&logoColor=white)](#-automated-testing-suite)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blueviolet?style=for-the-badge)](LICENSE)
 
 <br/>
 
-[Key Features](#-key-features) • [System Architecture](#-system-architecture) • [Settlement Workflow](#-bilateral-settlement-flow) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Testing](#-automated-testing-suite) • [Contributing](#-contributing)
+[Key Features](#-key-features) • [System Architecture](#-system-architecture) • [Settlement Workflow](#-bilateral-settlement-flow) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Testing](#-automated-testing-suite) • [License](#-license)
 
 </div>
 
@@ -264,6 +265,10 @@ Contributions, feedback, and issue reports are warmly welcomed!
 5. Open a Pull Request
 
 ---
+
+## 📄 License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for complete licensing terms.
 
 <div align="center">
   <sub>Built with ❤️ for seamless personal finance and smart bill splitting.</sub>
